@@ -1,12 +1,19 @@
-import { useParams } from "react-router-dom";
+import { useContext, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import fetchPet from "./fetchPet";
 import Carousel from "./Carousel";
-import { ErrorBoundary } from "react-error-boundary";
+import ErrorBoundary from "./ErrorBoundary";
+import Modal from "./Modal";
+import AdoptedPetContext from "./AdoptedPetContext";
 
 const Details = () => {
+  const [showPortal, setShowPortal] = useState(false);
   const { id } = useParams();
   const results = useQuery(["details", id], fetchPet);
+  const navigate = useNavigate();
+  // eslint-disable-next-line no-unused-vars
+  const [_, setAdoptedPet] = useContext(AdoptedPetContext);
 
   if (results.isLoading) {
     return (
@@ -26,8 +33,27 @@ const Details = () => {
         <h2>
           {pet.animal} — {pet.breed} — {pet.city}, {pet.state}
         </h2>
-        <button>Adopt {pet.name}</button>
+        <button onClick={() => setShowPortal(true)}>Adopt {pet.name}</button>
         <p>{pet.description}</p>
+
+        {showPortal ? (
+          <Modal>
+            <div>
+              <h1>Would you like to adopt {pet.name}?</h1>
+              <div className="buttons">
+                <button
+                  onClick={() => {
+                    setAdoptedPet(pet);
+                    navigate("/");
+                  }}
+                >
+                  Yes
+                </button>
+                <button onClick={() => setShowPortal(false)}>No</button>
+              </div>
+            </div>
+          </Modal>
+        ) : null}
       </div>
     </div>
   );
@@ -35,7 +61,7 @@ const Details = () => {
 
 export default function DetailsErrorBoundary(props) {
   return (
-    <ErrorBoundary fallback={"something went wrong"}>
+    <ErrorBoundary>
       <Details {...props} />
     </ErrorBoundary>
   );
